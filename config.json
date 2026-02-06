@@ -1,0 +1,180 @@
+[
+  {
+    "key": "tokenNameStyle",
+    "type": "enum",
+    "default": "camelCase",
+    "title": "Token name format",
+    "description": "Export token names in the selected case.",
+    "category": "Token names",
+    "options": {
+      "camelCase": {
+        "label": "Camel case",
+        "description": "Example: myVariableName"
+      },
+      "pascalCase": {
+        "label": "Pascal case",
+        "description": "Example: MyVariableName"
+      },
+      "snakeCase": {
+        "label": "Snake case",
+        "description": "Example: my_variable_name"
+      },
+      "constantCase": {
+        "label": "Constant case",
+        "description": "Example: MY_VARIABLE_NAME"
+      }
+    }
+  },
+  {
+    "key": "classNamePrefix",
+    "type": "string",
+    "default": "App",
+    "title": "Class name prefix",
+    "description": "Prefix for generated Dart class names (e.g. 'App' produces AppColors, AppTextStyles, etc.).",
+    "category": "Token names"
+  },
+  {
+    "key": "showDescriptions",
+    "type": "boolean",
+    "default": true,
+    "title": "Show token descriptions",
+    "description": "Show the token description as a documentation comment (///) for every exported token.",
+    "category": "Output"
+  },
+  {
+    "key": "showGeneratedFileDisclaimer",
+    "type": "boolean",
+    "default": true,
+    "title": "Show file disclaimer",
+    "description": "A message explaining that the file was automatically generated will appear at the top of all generated files.",
+    "category": "Output"
+  },
+  {
+    "key": "disclaimer",
+    "type": "string",
+    "default": "This file was generated automatically by Supernova.io and should not be changed manually.\nTo modify the format or content of this file, please contact your design system team.",
+    "title": "Disclaimer message",
+    "description": "The disclaimer text to include at the top of generated files.",
+    "category": "Output",
+    "dependsOn": {
+      "showGeneratedFileDisclaimer": true
+    }
+  },
+  {
+    "key": "generateEmptyFiles",
+    "type": "boolean",
+    "default": false,
+    "title": "Generate empty style files",
+    "description": "Generate empty style files for token types that have no tokens, instead of omitting them.",
+    "category": "Style files"
+  },
+  {
+    "key": "generateBarrelFile",
+    "type": "boolean",
+    "default": true,
+    "title": "Generate barrel file",
+    "description": "Generate a barrel file that re-exports all generated style files.",
+    "category": "Style files"
+  },
+  {
+    "key": "barrelFileName",
+    "type": "string",
+    "default": "tokens.dart",
+    "title": "Barrel filename",
+    "description": "The name of the barrel file that will be generated.",
+    "category": "Style files",
+    "dependsOn": {
+      "generateBarrelFile": true
+    }
+  },
+  {
+    "key": "baseStyleFilePath",
+    "type": "string",
+    "default": "./base",
+    "title": "Path to base style files",
+    "description": "All base (non-themed) files will be written to this directory relative to export root.",
+    "category": "Style files"
+  },
+  {
+    "key": "styleFileNames",
+    "type": "object",
+    "title": "Style file names",
+    "description": "Name of each file that will be generated, grouped by token type.",
+    "category": "Style files",
+    "default": {
+      "Color": "colors.dart",
+      "Typography": "text_styles.dart",
+      "Shadow": "shadows.dart",
+      "Gradient": "gradients.dart",
+      "Border": "borders.dart",
+      "Radius": "radii.dart",
+      "Dimension": "dimensions.dart",
+      "Size": "sizes.dart",
+      "Space": "spaces.dart",
+      "Opacity": "opacities.dart",
+      "FontSize": "font_sizes.dart",
+      "FontWeight": "font_weights.dart",
+      "FontFamily": "font_families.dart",
+      "LineHeight": "line_heights.dart",
+      "LetterSpacing": "letter_spacings.dart",
+      "ParagraphSpacing": "paragraph_spacings.dart",
+      "BorderWidth": "border_widths.dart",
+      "BorderRadius": "border_radii.dart",
+      "Duration": "durations.dart",
+      "ZIndex": "z_indices.dart",
+      "String": "strings.dart",
+      "ProductCopy": "product_copy.dart",
+      "TextCase": "text_cases.dart",
+      "TextDecoration": "text_decorations.dart",
+      "Visibility": "visibilities.dart",
+      "Blur": "blurs.dart"
+    },
+    "allowedKeys": {
+      "options": [
+        "Color", "Typography", "Dimension", "Size", "Space", "Opacity",
+        "FontSize", "LineHeight", "LetterSpacing", "ParagraphSpacing",
+        "BorderWidth", "BorderRadius", "Duration", "ZIndex", "Shadow",
+        "Border", "Gradient", "String", "ProductCopy", "FontFamily",
+        "FontWeight", "TextCase", "TextDecoration", "Visibility", "Blur", "Radius"
+      ],
+      "type": "string"
+    },
+    "allowedValues": {
+      "type": "string"
+    }
+  },
+  {
+    "key": "exportThemesAs",
+    "type": "enum",
+    "default": "separateFiles",
+    "title": "Theme export format",
+    "description": "Control how themes are exported in the generated files.",
+    "category": "Themes",
+    "options": {
+      "separateFiles": {
+        "label": "Separate files per theme",
+        "description": "Generate a separate file for each selected theme in subdirectories"
+      },
+      "applyDirectly": {
+        "label": "Apply themes directly",
+        "description": "Apply selected themes directly to token values (single set of files)"
+      }
+    }
+  },
+  {
+    "key": "exportBaseValues",
+    "type": "boolean",
+    "default": true,
+    "title": "Export base values",
+    "description": "Base token values will be exported along with themes.",
+    "category": "Themes"
+  },
+  {
+    "key": "exportOnlyThemedTokens",
+    "type": "boolean",
+    "default": false,
+    "title": "Export only themed tokens",
+    "description": "Theme files will only include tokens that have different values from the base value.",
+    "category": "Themes"
+  }
+]
