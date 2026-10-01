@@ -1,14 +1,19 @@
 {
-  "id": "io.supernova.flutter-styles",
-  "name": "Flutter",
-  "description": "Flutter token and style exporter",
-  "author": "Supernova.io",
-  "organization": "Supernova.io",
-  "homepage": "https://supernova.io",
-  "version": "2.0.0",
-  "usesBrands": true,
+  "id": "ninjatrader.strata-flutter-tokens",
+  "name": "NinjaTrader Strata Flutter Token Exporter",
+  "description": "Exports Strata tokens into the mobile_strata Dart layout: core literals, semantic density, and one .gen.dart per brand (nt, tdv) with dark and light StrataThemeData instances that reference core constants.",
+  "author": "NinjaTrader",
+  "organization": "NinjaTrader",
+  "homepage": "https://github.com/NT-NinjaTrader/ninjatrader_mobile",
+  "version": "0.1.0",
+  "usesBrands": false,
   "usesThemes": true,
   "executable": "/dist/build.js",
   "engine": "latest",
-  "tags": ["Flutter", "Dart", "Tokens", "Styles"]
+  "tags": [
+    "tokens",
+    "flutter",
+    "dart",
+    "strata"
+  ]
 }

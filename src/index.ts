@@ -1,137 +1,55 @@
-import {
-  Supernova,
-  PulsarContext,
-  RemoteVersionIdentifier,
-  AnyOutputFile,
-  TokenType,
-  TokenTheme,
-} from "@supernovaio/sdk-exporters"
-import { ExporterConfiguration, ThemeExportStyle } from "../config"
-import { styleOutputFile } from "./files/style-file"
-import { barrelOutputFile } from "./files/barrel-file"
+/**
+ * NinjaTrader Strata — Supernova Flutter token exporter.
+ *
+ * Writes the `mobile_strata` token layout (`lib/src/tokens/`): core literals,
+ * semantic density, the StrataThemeData shape, and one `.gen.dart` per brand
+ * with dark and light instances. Theme and brand discovery follow
+ * supernova-web-exporter so both platforms read Strata the same way.
+ *
+ * Point the pipeline destination at `packages/mobile_strata/lib/src/tokens`.
+ */
 
-/** Exporter configuration resolved from config.json defaults and user overrides */
+import type { AnyOutputFile, RemoteVersionIdentifier } from "@supernovaio/sdk-exporters"
+import { OutputFileType } from "@supernovaio/sdk-exporters"
+
+import { ExporterConfiguration } from "../config"
+import { writeDart } from "./dart/writer"
+import { discoveryOutputFile } from "./files/discovery-file"
+import { modelFromSdk } from "./sdk/adapter"
+
 export const exportConfiguration = Pulsar.exportConfig<ExporterConfiguration>()
 
-/**
- * Filters out null values from an array of output files.
- */
-function processOutputFiles(files: Array<AnyOutputFile | null>): Array<AnyOutputFile> {
-  return files.filter((file): file is AnyOutputFile => file !== null)
-}
+Pulsar.export(async (sdk, context): Promise<Array<AnyOutputFile>> => {
+  const version: RemoteVersionIdentifier = { designSystemId: context.dsId, versionId: context.versionId }
 
-/**
- * Converts a theme name to a safe directory name (camelCase, filesystem-safe).
- */
-function themeToDirectoryName(theme: TokenTheme): string {
-  const name = theme.codeName || theme.name
-  return name
-    .replace(/[^a-zA-Z0-9\s]/g, "")
-    .trim()
-    .split(/\s+/)
-    .map((word, i) => {
-      if (i === 0) return word.toLowerCase()
-      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-    })
-    .join("")
-}
+  const [tokens, groups, themes, collections] = await Promise.all([
+    sdk.tokens.getTokens(version),
+    sdk.tokens.getTokenGroups(version),
+    sdk.tokens.getTokenThemes(version),
+    sdk.tokens.getTokenCollections(version),
+  ])
+  console.log(`[flutter-exporter] ${tokens.length} tokens, ${themes.length} themes, ${collections.length} collections`)
 
-/**
- * Main export function that generates Dart files from design tokens.
- *
- * Handles:
- * - Fetching tokens and token groups from the design system
- * - Filtering tokens by brand if specified
- * - Processing themes (separate files per theme, or applied directly)
- * - Generating style files for each token type as Dart classes
- * - Creating a barrel file re-exporting everything
- */
-Pulsar.export(async (sdk: Supernova, context: PulsarContext): Promise<Array<AnyOutputFile>> => {
-  const remoteVersionIdentifier: RemoteVersionIdentifier = {
-    designSystemId: context.dsId,
-    versionId: context.versionId,
+  if (exportConfiguration.discoveryOnly) {
+    const brands = await sdk.brands.getBrands(version)
+    return [discoveryOutputFile(context, brands, collections, themes, tokens)]
   }
 
-  // Fetch tokens and token groups
-  let tokens = await sdk.tokens.getTokens(remoteVersionIdentifier)
-  let tokenGroups = await sdk.tokens.getTokenGroups(remoteVersionIdentifier)
+  const model = modelFromSdk({
+    tokens,
+    groups,
+    themes,
+    collections,
+    themeNames: { dark: exportConfiguration.darkThemeName, light: exportConfiguration.lightThemeName },
+  })
+  const { files, notes } = writeDart(model)
+  // console.warn fails a Supernova build (web exporter NOTES.md), so notes use log.
+  for (const note of notes) console.log(`[flutter-exporter] ${note}`)
 
-  // Filter by brand if specified
-  if (context.brandId) {
-    const brands = await sdk.brands.getBrands(remoteVersionIdentifier)
-    const brand = brands.find((b) => b.id === context.brandId || b.idInVersion === context.brandId)
-    if (!brand) {
-      throw new Error(`Unable to find brand ${context.brandId}.`)
-    }
-    tokens = tokens.filter((token) => token.brandId === brand.id)
-    tokenGroups = tokenGroups.filter((group) => group.brandId === brand.id)
-  }
-
-  let outputFiles: Array<AnyOutputFile | null> = []
-  const themePaths: Array<{ path: string; label: string }> = []
-
-  // Process themes if specified
-  if (context.themeIds && context.themeIds.length > 0) {
-    const themes = await sdk.tokens.getTokenThemes(remoteVersionIdentifier)
-
-    // Find and validate requested themes
-    const themesToApply = context.themeIds.map((themeId) => {
-      const theme = themes.find((t) => t.id === themeId || t.idInVersion === themeId)
-      if (!theme) {
-        throw new Error(`Unable to find theme ${themeId}`)
-      }
-      return theme
-    })
-
-    switch (exportConfiguration.exportThemesAs) {
-      case ThemeExportStyle.SeparateFiles: {
-        // Generate base files if configured
-        if (exportConfiguration.exportBaseValues) {
-          const baseFiles = Object.values(TokenType).map((type) =>
-            styleOutputFile(type, tokens, tokenGroups, exportConfiguration)
-          )
-          outputFiles.push(...baseFiles)
-        }
-
-        // Generate separate themed files per theme
-        for (const theme of themesToApply) {
-          const themedTokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, [theme])
-          const themeDirName = themeToDirectoryName(theme)
-
-          themePaths.push({ path: themeDirName, label: theme.name })
-
-          const themeFiles = Object.values(TokenType).map((type) =>
-            styleOutputFile(type, themedTokens, tokenGroups, exportConfiguration, themeDirName, theme)
-          )
-          outputFiles.push(...themeFiles)
-        }
-        break
-      }
-
-      case ThemeExportStyle.ApplyDirectly: {
-        // Apply all themes directly to tokens, output single set of files
-        tokens = sdk.tokens.computeTokensByApplyingThemes(tokens, tokens, themesToApply)
-
-        const files = Object.values(TokenType).map((type) =>
-          styleOutputFile(type, tokens, tokenGroups, exportConfiguration)
-        )
-        outputFiles.push(...files)
-        break
-      }
-    }
-  } else {
-    // No themes: generate base files only
-    const files = Object.values(TokenType).map((type) =>
-      styleOutputFile(type, tokens, tokenGroups, exportConfiguration)
-    )
-    outputFiles.push(...files)
-  }
-
-  // Generate barrel file
-  const barrel = barrelOutputFile(tokens, exportConfiguration, themePaths)
-  if (barrel) {
-    outputFiles.push(barrel)
-  }
-
-  return processOutputFiles(outputFiles)
+  return files.map((f) => ({
+    path: `./${f.path}`,
+    name: f.name,
+    content: f.content,
+    type: OutputFileType.text,
+  }))
 })

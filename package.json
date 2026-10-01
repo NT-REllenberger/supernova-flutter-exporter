@@ -1,13 +1,16 @@
 {
-  "name": "@nt/exporter-flutter",
-  "version": "2.0.0",
-  "description": "Export your design system tokens into Flutter/Dart classes and definitions using Supernova.io export engine",
+  "name": "@nt/strata-flutter-exporter",
+  "version": "0.1.0",
+  "description": "Supernova exporter that writes the mobile_strata Dart token layout (core, semantic density, brand themes).",
   "main": "index.js",
   "scripts": {
     "dev": "npx webpack --mode=development --watch",
-    "build": "npx webpack --mode=production"
+    "build": "npx webpack --mode=production",
+    "typecheck": "tsc --noEmit --skipLibCheck -p .",
+    "test": "vitest run",
+    "generate:local": "tsx scripts/generate-local.ts ../../../strata/design-system-foundations/web/src/tokens/tokens.json ../../packages/mobile_strata/lib/src/tokens"
   },
-  "author": "Supernova.io",
+  "author": "NinjaTrader",
   "license": "MIT",
   "peerDependencies": {
     "@supernovaio/sdk-exporters": "2.2.54"
@@ -17,7 +20,9 @@
     "prettier": "3.0.3",
     "terser-webpack-plugin": "5.3.9",
     "ts-loader": "^7.0.5",
+    "tsx": "^4.23.15",
     "typescript": "^5.2.2",
+    "vitest": "^3.2.7",
     "webpack": "5.98.0",
     "webpack-cli": "6.0.1"
   },
